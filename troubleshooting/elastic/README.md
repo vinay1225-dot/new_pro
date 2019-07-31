@@ -50,7 +50,18 @@ Grafana Logging dashboard: https://dashboards.gitlab.net/d/USVj3qHmk/logging?org
     - some useful examples:
       - shard status
       - reballancing status
-      - shard assignment status
+      - shard allocation status: `/_cluster/allocation/explain?pretty`
+      - retry shard allocation: `/_cluster/reroute?retry_failed=true`
+      - get shards: `/_cat/shards`
+      - get index templates: `/_cat/templates?v&s=name`
+      - get aliases: `/_aliases`
+      - get indeces: `/_cat/indices?v`
+      - get shard stats: `/<index_name>/_stats?level=shards`
+      - get indices sorted by size: `/_cat/indices?v&s=store.size:desc&h=index,docs.count,store.size`
+      - force index rollover: `/<index_name>/_rollover`
+      - list indeces with number of docs and storage used: `/_cat/indices?v&s=store.size:desc&h=index,docs.count,store.size`
+      - cluster settings: `/_cluster/settings`
+      - cluster health: `_cluster/health`
       - `_cat`
       - `_stats`
 
