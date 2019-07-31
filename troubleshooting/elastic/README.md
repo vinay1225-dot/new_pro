@@ -67,6 +67,15 @@ Grafana Logging dashboard: https://dashboards.gitlab.net/d/USVj3qHmk/logging?org
 
 ## esc-tools ##
 
+## Ideas of things to check (based on previous incidents) ##
+
+on ES cluster:
+- do the nodes have enough disk space?
+- are shards being moved?
+- are all shards allocated?
+- what's the indexing latency?
+- what's the cpu usage?
+
 # Failover and Recovery procedures #
 
 ## Fluentd ##
