@@ -74,7 +74,7 @@ on ES cluster:
 - are shards being moved?
 - are all shards allocated?
 - what's the indexing latency?
-- what's the cpu usage?
+- what's the cpu/memory/io usage?
 
 # Failover and Recovery procedures #
 
@@ -116,6 +116,7 @@ on ES cluster:
   - API call (wildcards accepted)
   - in newer versions of ES this can also be done using Kibana -> Index Management
 - restarting ES deployment
+- acknowlede all messages in the pubsub queue: `gcloud beta pubsub subscriptions seek testSubscription --time=$(date +%Y-%m-%dT%H:%M:%S)`
 
 ## esc-tools ##
 
