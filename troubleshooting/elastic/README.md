@@ -59,6 +59,19 @@ Grafana Logging dashboard: https://dashboards.gitlab.net/d/USVj3qHmk/logging?org
       - get shard stats: `/<index_name>/_stats?level=shards`
       - get indices sorted by size: `/_cat/indices?v&s=store.size:desc&h=index,docs.count,store.size`
       - force index rollover: `/<index_name>/_rollover`
+      ```json
+{
+	"index": {
+		"lifecycle": {
+			"indexing_complete": "true"
+		}
+	}
+}
+
+      ```
+
+
+
       - list indeces with number of docs and storage used: `/_cat/indices?v&s=store.size:desc&h=index,docs.count,store.size`
       - cluster settings: `/_cluster/settings`
       - cluster health: `_cluster/health`
