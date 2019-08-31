@@ -6,6 +6,7 @@ local templates = import 'templates.libsonnet';
 local layout = import 'layout.libsonnet';
 local basic = import 'basic.libsonnet';
 local seriesOverrides = import 'series_overrides.libsonnet';
+local keyMetrics = import 'key_metrics.libsonnet';
 local text = grafana.text;
 
 dashboard.new(
@@ -23,9 +24,22 @@ dashboard.new(
 .addTemplate(templates.environment)
 .addPanels(layout.grid([
   text.new(
+    title='Web apdex',
+    mode='markdown',
+    content='
+      Slowdown in webservices was the first sign of a problem.
+    '
+  ),
+  keyMetrics.apdexPanel(serviceType='web', serviceStage='main'),
+
+  // ------------------------------------------------------
+
+  text.new(
     title='Single core saturation on the redis-cache fleet',
     mode='markdown',
-    content=''
+    content='
+      Single core saturation in the main Redis cache cluster lead to slowdowns across multiple other services.
+    '
   ),
   basic.saturationTimeseries(
     title="Single core saturation on the redis-cache fleet",
@@ -41,7 +55,9 @@ dashboard.new(
   text.new(
     title='Redis-cache network traffic',
     mode='markdown',
-    content=''
+    content='
+      Huge volumes of traffic, particularly application settings, was being sent from the cache to the web instances at a very high rate.
+    '
   ),
   basic.networkTrafficGraph(
     title="Single core saturation on the redis-cache fleet",
