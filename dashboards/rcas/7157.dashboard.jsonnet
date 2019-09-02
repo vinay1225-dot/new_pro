@@ -26,20 +26,16 @@ dashboard.new(
   text.new(
     title='Web apdex',
     mode='markdown',
-    content='
-      Slowdown in webservices was the first sign of a problem.
-    '
+    content='Slowdown in webservices was the first sign of a problem.'
   ),
   keyMetrics.apdexPanel(serviceType='web', serviceStage='main'),
 
   // ------------------------------------------------------
 
   text.new(
-    title='Single core saturation on the redis-cache fleet',
+    title='A slowdown across multiple services in the fleet',
     mode='markdown',
-    content='
-      Single core saturation in the main Redis cache cluster lead to slowdowns across multiple other services.
-    '
+    content='Single core saturation in the main Redis cache cluster lead to slowdowns across multiple other services.'
   ),
   basic.saturationTimeseries(
     title="Single core saturation on the redis-cache fleet",
@@ -55,9 +51,7 @@ dashboard.new(
   text.new(
     title='Redis-cache network traffic',
     mode='markdown',
-    content='
-      Huge volumes of traffic, particularly application settings, was being sent from the cache to the web instances at a very high rate.
-    '
+    content='Huge volumes of traffic, particularly application settings, was being sent from the cache to the web instances at a very high rate.'
   ),
   basic.networkTrafficGraph(
     title="Single core saturation on the redis-cache fleet",
