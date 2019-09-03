@@ -63,6 +63,30 @@ dashboard.new(
     ',
     intervalFactor=2
   ),
+
+  // ------------------------------------------------------
+
+  text.new(
+    title='Redis CPU',
+    mode='markdown',
+    content=''
+  ),
+  basic.saturationTimeseries(
+    title="Redis CPU",
+    query='
+      max(
+        (
+          rate(redis_cpu_user_seconds_total{environment="gprd", type="redis-cache"}[$__interval]) + rate(redis_cpu_sys_seconds_total{environment="gprd", type="redis-cache"}[$__interval])
+        )
+        or
+        (
+          rate(redis_used_cpu_user{environment="gprd", type="redis-cache"}[$__interval]) + rate(redis_used_cpu_sys{environment="gprd", type="redis-cache"}[$__interval])
+        )
+      )
+    ',
+    legendFormat='Redis CPU',
+  )
+
 ], cols=2,rowHeight=10, startRow=1))
 + {
   annotations: {
