@@ -2,7 +2,7 @@
 
 This is an overview of certificates, where they are used and how they can be replaced in their service.
 
-### General info
+## General info
 
 - COMODO has renamed to Sectigo, those names might get used interchangeably in this document. Any Certificate that is listed as issued by COMODO will in the future be issued by Sectigo.
 - Our primary certificate source is [SSMLate](https://sslmate.com/console/orders/).
@@ -10,21 +10,22 @@ This is an overview of certificates, where they are used and how they can be rep
   - Those files are permanent links to the public chain of the certificate. The key is *not* part of that chain.
 - [There is an effort to automate certificate rotation](https://gitlab.com/gitlab-com/gl-infra/infrastructure/issues/6778). Certificates/Services where that automation has been implemented will be marked accordingly.
 
-### Deployment and replacement strategies
+## Deployment and replacement strategies
 
-Currently we have one standard way of deploying certificates. Any variation of this process (or an entirely different one) will be noted in the specific certificate use and link to a sub-runbook documenting that process.
+Currently we have multiple ways of deploying certificates. Please see the `Management` and `Item` columns to find the management process and item to edit according to that documentation.
 
-The standard process is documented [here](TODO_LINK). Please see the `Secret bag item` columns to find the required item to edit according to that documentation.
+- [Chef Vault][cv]
+- [Fastly][f]
 
-### Certificates and their use
+## Certificates and their use
 
-## Certificates currently managed by the GitLab Infrastructure team:
-| domain | issuer |  Comments | Secret bag item |
+### Certificates currently managed by the GitLab Infrastructure team:
+| domain | issuer |  Comments | Management | Items |
 | ------ | ------ | ----------- | -------- |
-| about-src.gitlab.com | COMODO RSA Domain Validation Secure Server CA | about.gitlab.com origin certificate |
-| about.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | CDN Certificate for about.gitlab.com |
+| about-src.gitlab.com | COMODO RSA Domain Validation Secure Server CA | about.gitlab.com origin certificate | [Chef Vault][cv] | data bag: `about-gitlab-com`, item: `_default`, fields: `ssl_certificate`, `ssl_key` |
+| about.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | CDN Certificate for about.gitlab.com | [Fastly][f] | |
 | canary.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | Canary direct access |
-| ce.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | Redirect to CE repo, hosted on about-src. |
+| ce.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | Redirect to CE repo, hosted on about-src. | [Fastly][f] & [Chef Vault][cv] | data bag: `about-gitlab-com`, item: `_default`, fields: `[ce.gitlab.com][ssl_certificate]`, `[ce.gitlab.com][ssl_key]` |
 | chef.gitlab.com | COMODO RSA Domain Validation Secure Server CA | Chef server |
 | contributors.gitlab.com | COMODO ECC Domain Validation Secure Server CA | Redirect to gitlab.biterg.io, hosted on fastly |
 | customers.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | Customer management |
@@ -33,11 +34,12 @@ The standard process is documented [here](TODO_LINK). Please see the `Secret bag
 | dev.gitlab.org | COMODO RSA Domain Validation Secure Server CA | dev instance |
 | docs.gitlab.com | COMODO RSA Domain Validation Secure Server CA | GitLab documentation |
 | dr.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | Disaster recovery instance |
-| ee.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | Redirect to EE repo, hosted on about-src., no CDN |
+| ee.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | Redirect to EE repo, hosted on about-src., no CDN | [Fastly][f] & [Chef Vault][cv] | data bag: `about-gitlab-com`, item: `_default`, fields: `[ee.gitlab.com][ssl_certificate]`, `[ee.gitlab.com][ssl_key]` |
 | forum.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | GitLab forum |
 | gitlab.com | Sectigo RSA Domain Validation Secure Server CA | Duh |
 | gitlab.org | COMODO RSA Domain Validation Secure Server CA | Redirect to about.gitlab.com, hosted on fastly (about-src) |
-| jobs.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | redirects to https://about.gitlab.com/jobs/ Hosted on about-src, without CDN |
+| hub.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | redirects to https://lab.github.com/ (https://gitlab.com/gitlab-com/gl-infra/infrastructure/issues/6667) | [Fastly][f] & [Chef Vault][cv] | data bag: `about-gitlab-com`, item: `_default`, fields: `[hub.gitlab.com][ssl_certificate]`, `[hub.gitlab.com][ssl_key]` |
+| jobs.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | redirects to https://about.gitlab.com/jobs/ Hosted on about-src, without CDN | [Fastly][f] & [Chef Vault][cv] | data bag: `about-gitlab-com`, item: `_default`, fields: `[jobs.gitlab.com][ssl_certificate]`, `[jobs.gitlab.com][ssl_key]` |
 | license.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | |
 | log.gitlab.net | Sectigo RSA Domain Validation Secure Server CA | |
 | monitor.gitlab.net | COMODO RSA Domain Validation Secure Server CA | redirects to dashboards.gitlab.net |
@@ -70,10 +72,7 @@ The standard process is documented [here](TODO_LINK). Please see the `Secret bag
 | *.gitter.im | COMODO RSA Domain Validation Secure Server CA | gitter.im is a SAN in that certificate |
 | *.gstg.gitlab.io | Sectigo RSA Domain Validation Secure Server CA | GitLab pages on gstg |
 | *.pre.gitlab.io | Sectigo RSA Domain Validation Secure Server CA |  Not used. pre is misconfigured to use *.gitlab.io instead. Should be fixed, thus putting in infra section |
-| *.qa-tunnel.gitlab.info | Sectigo RSA Domain Validation Secure Server CA | 2020-06-29T23:59:59 | Maybe managed by infra? |
-
-
-
+| *.qa-tunnel.gitlab.info | Sectigo RSA Domain Validation Secure Server CA | |
 
 
 
@@ -155,7 +154,6 @@ Other Certs (Unknown maintainer)
 | ------ | ------ | ----------- | -------- |
 | federal-support.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | 2020-05-22T23:59:59 | US Federal Zendesk instance |
 | federal-support.gitlab.com | Let's Encrypt Authority X3 | 2019-09-29T18:11:39 | |
-| hub.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | 2020-05-02T23:59:59 | redirects to https://lab.github.com/ (https://gitlab.com/gitlab-com/gl-infra/infrastructure/issues/6667) |
 | learn.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | 2020-05-30T23:59:59 | redirects to https://gitlab.lookbookhq.com/users/sign_in |
 | page.gitlab.com | CloudFlare, Inc. | | redirect to about. (Non infra managed as CF renews automagically) |
 | page.gitlab.com | CloudFlare, Inc. | | |
@@ -173,3 +171,6 @@ Other Certs (Unknown maintainer)
 | *.gprd.gitlab.net | Sectigo RSA Domain Validation Secure Server CA | 2020-05-14T23:59:59 |  does not resolve, is it used? |
 | *.gstg.gitlab.com | Sectigo RSA Domain Validation Secure Server CA | 2020-04-11T23:59:59 | does not resolve, is it used? |
 | *.gstg.gitlab.net | Sectigo RSA Domain Validation Secure Server CA | 2020-05-14T23:59:59 | does not resolve, is it used? |
+
+[cv]: chef_vault.md
+[f]: fastly.md
