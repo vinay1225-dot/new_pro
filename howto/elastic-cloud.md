@@ -12,7 +12,8 @@ Current capacity:
 ## Cluster set up
 
 1. configure Index patterns in Kibana
-  - use json.time (timestamp of the log) rather than timestamp (when the log was received by the cluster)
+  - where possible, use json.time (timestamp of the log) rather than timestamp (when the log was received by the cluster)
+  - it's currently impossible to configure index patterns through api: https://github.com/elastic/kibana/issues/2310 and https://github.com/elastic/kibana/issues/3709
 
 ## Configure Storage Watermarks
 
