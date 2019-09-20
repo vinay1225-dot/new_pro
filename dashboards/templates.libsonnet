@@ -2,6 +2,14 @@ local grafana = import 'grafonnet/grafana.libsonnet';
 local template = grafana.template;
 
 {
+  gkeCluster:: template.new(
+    'cluster',
+    '$PROMETHEUS_DS',
+    'label_values(kube_pod_container_info{environment="$environment"}, cluster)',
+    current='gprd-gitlab-gke ',
+    refresh='load',
+    sort=1,
+  ),
   ds:: template.datasource(
     'PROMETHEUS_DS',
     'prometheus',
@@ -43,4 +51,13 @@ local template = grafana.template;
     refresh='load',
     sort=1,
   ),
+  sidekiqWorker:: template.new(
+    "worker",
+    "$PROMETHEUS_DS",
+    'label_values(gitlab_background_worker_queue_duration_apdex:ratio{environment="$environment"}, worker)',
+    current="NewMergeRequestWorker",
+    refresh='load',
+    sort=1,
+  ),
+
 }

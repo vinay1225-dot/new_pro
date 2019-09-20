@@ -16,11 +16,12 @@ local seriesOverrides = import 'series_overrides.libsonnet';
     intervalFactor=3,
     yAxisLabel='',
     legend_show=true,
+    linewidth=2
     ):: graphPanel.new(
     title,
     description=description,
     sort="decreasing",
-    linewidth=2,
+    linewidth=linewidth,
     fill=0,
     datasource="$PROMETHEUS_DS",
     decimals=0,
@@ -57,11 +58,12 @@ local seriesOverrides = import 'series_overrides.libsonnet';
     interval="1m",
     intervalFactor=3,
     yAxisLabel='Queue Length',
+    linewidth=2,
     ):: graphPanel.new(
     title,
     description=description,
     sort="decreasing",
-    linewidth=2,
+    linewidth=linewidth,
     fill=0,
     datasource="$PROMETHEUS_DS",
     decimals=0,
@@ -97,15 +99,17 @@ local seriesOverrides = import 'series_overrides.libsonnet';
     yAxisLabel='Saturation',
     interval="1m",
     intervalFactor=3,
+    linewidth=2,
+    legend_show=true,
     ):: graphPanel.new(
     title,
     description=description,
     sort="decreasing",
-    linewidth=2,
+    linewidth=linewidth,
     fill=0,
     datasource="$PROMETHEUS_DS",
     decimals=0,
-    legend_show=true,
+    legend_show=legend_show,
     legend_values=true,
     legend_min=true,
     legend_max=true,
@@ -141,14 +145,17 @@ local seriesOverrides = import 'series_overrides.libsonnet';
     intervalFactor=3,
     legend_show=true,
     logBase=1,
+    decimals=2,
+    linewidth=2,
+    min=0,
     ):: graphPanel.new(
     title,
     description=description,
     sort="decreasing",
-    linewidth=2,
+    linewidth=linewidth,
     fill=0,
     datasource="$PROMETHEUS_DS",
-    decimals=0,
+    decimals=decimals,
     legend_show=legend_show,
     legend_values=true,
     legend_min=true,
@@ -163,7 +170,7 @@ local seriesOverrides = import 'series_overrides.libsonnet';
   .resetYaxes()
   .addYaxis(
     format="s",
-    min=0,
+    min=min,
     label=yAxisLabel,
     logBase=logBase,
   )
@@ -214,4 +221,49 @@ local seriesOverrides = import 'series_overrides.libsonnet';
     show=false,
   ),
 
+  networkTrafficGraph(
+    title="Node Network Utilization",
+    description="Network utilization",
+    sendQuery,
+    legendFormat='{{ fqdn }}',
+    receiveQuery,
+    intervalFactor=3,
+    legend_show=true
+  ):: graphPanel.new(
+        title,
+        linewidth=1,
+        fill=0,
+        description=description,
+        datasource="$PROMETHEUS_DS",
+        decimals=2,
+        sort="decreasing",
+        legend_show=legend_show,
+        legend_values=false,
+        legend_alignAsTable=false,
+        legend_hideEmpty=true,
+      )
+      .addSeriesOverride(seriesOverrides.networkReceive)
+      .addTarget(
+        promQuery.target(sendQuery,
+          legendFormat='send ' + legendFormat,
+          intervalFactor=intervalFactor,
+        )
+      )
+      .addTarget(
+        promQuery.target(receiveQuery,
+          legendFormat='receive ' + legendFormat,
+          intervalFactor=intervalFactor,
+        )
+      )
+      .resetYaxes()
+      .addYaxis(
+        format='Bps',
+        label="Network utilization",
+      )
+      .addYaxis(
+        format='short',
+        max=1,
+        min=0,
+        show=false,
+      )
 }

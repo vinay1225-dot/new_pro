@@ -20,6 +20,17 @@ groups:
       grafana_dashboard_id: "000000231/chef-client"
       runbook: troubleshooting/chef.md
       title: Chef client hasn't run for longer than expected
+  - alert: ChefClientStale
+    expr: time() - chef_client_last_run_timestamp_seconds > 3 * 86400
+    for: 1h
+    labels:
+      severity: s2
+      pager: issue
+    annotations:
+      description: Last Chef run for {{ $labels.fqdn }} was over {{ $value | humanizeDuration }} ago
+      grafana_dashboard_id: "000000231/chef-client"
+      runbook: troubleshooting/chef.md
+      title: Chef client hasn't run for longer than expected
   - alert: ChefClientErrorCritical
     expr: avg(chef_client_error) by (type) * 100 > 10
     for: 1h
@@ -27,7 +38,7 @@ groups:
       severity: s1
       pager: pagerduty
     annotations:
-      description: |
+      description: >
         At least 10% of type {{ $labels.type }} are failing chef-runs, this likely points to a configuration
         error. Check the syslog of the failing hosts to see the reasons
       grafana_dashboard_id: "000000231/chef-client"

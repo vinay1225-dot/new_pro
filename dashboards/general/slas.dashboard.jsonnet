@@ -1,21 +1,27 @@
-local grafana = import 'grafonnet/grafana.libsonnet';
-local seriesOverrides = import 'series_overrides.libsonnet';
-local commonAnnotations = import 'common_annotations.libsonnet';
-local promQuery = import 'prom_query.libsonnet';
-local templates = import 'templates.libsonnet';
-local colors = import 'colors.libsonnet';
-local platformLinks = import 'platform_links.libsonnet';
-local capacityPlanning = import 'capacity_planning.libsonnet';
-local layout = import 'layout.libsonnet';
 local basic = import 'basic.libsonnet';
-local nodeMetrics = import 'node_metrics.libsonnet';
+local capacityPlanning = import 'capacity_planning.libsonnet';
+local colors = import 'colors.libsonnet';
+local commonAnnotations = import 'common_annotations.libsonnet';
+local grafana = import 'grafonnet/grafana.libsonnet';
 local keyMetrics = import 'key_metrics.libsonnet';
+local layout = import 'layout.libsonnet';
+local nodeMetrics = import 'node_metrics.libsonnet';
+local platformLinks = import 'platform_links.libsonnet';
+local promQuery = import 'prom_query.libsonnet';
+local seriesOverrides = import 'series_overrides.libsonnet';
 local serviceCatalog = import 'service_catalog.libsonnet';
+local templates = import 'templates.libsonnet';
 local dashboard = grafana.dashboard;
 local row = grafana.row;
 local template = grafana.template;
 local graphPanel = grafana.graphPanel;
 local annotation = grafana.annotation;
+
+local keyServices = serviceCatalog.findServices(function(service)
+  std.objectHas(service.business.SLA, 'primary_sla_service') &&
+  service.business.SLA.primary_sla_service);
+
+local keyServiceRegExp = std.join("|", std.map(function(service) service.name, keyServices));
 
 local slaBarGauge(
   title,
@@ -26,24 +32,24 @@ local slaBarGauge(
         displayMode: "gradient",
         fieldOptions: {
           calcs: [
-            "last"
+            "last",
           ],
           defaults: {
             decimals: 1,
             max: 1,
             min: 0,
-            unit: "percentunit"
+            unit: "percentunit",
           },
           mappings: [],
           override: {},
           thresholds: [{
             color: "green",
             index: 0,
-            value: null
+            value: null,
           }],
-          values: false
+          values: false,
         },
-        orientation: "horizontal"
+        orientation: "horizontal",
       },
       targets: [
         {
@@ -53,20 +59,20 @@ local slaBarGauge(
           interval: "",
           intervalFactor: 1,
           legendFormat: legendFormat,
-          refId: "A"
-        }
+          refId: "A",
+        },
       ],
       timeFrom: null,
       timeShift: null,
       title: title,
-      type: "bargauge"
+      type: "bargauge",
     };
 
 dashboard.new(
   'SLAs',
   schemaVersion=16,
   tags=['overview'],
-  timezone='UTC',
+  timezone='utc',
   graphTooltip='shared_crosshair',
   time_from='now-30d',
   time_to='now',
@@ -81,12 +87,13 @@ dashboard.new(
       '90d',
       '120d',
       '180d',
-    ]
+    ],
   },
 )
 .addTemplate(templates.ds)
 .addTemplate(templates.environment)
-.addPanel(row.new(title="Headline"),
+.addPanel(
+row.new(title="Headline"),
   gridPos={
       x: 0,
       y: 0,
@@ -94,38 +101,42 @@ dashboard.new(
       h: 1,
   }
 )
-.addPanels(layout.grid([
+.addPanels(
+layout.grid([
     grafana.singlestat.new(
       'SLA Status',
       datasource="$PROMETHEUS_DS",
       format='percentunit',
     )
     .addTarget(
-      promQuery.target('sort(
+      promQuery.target(
+'sort(
           avg(
-            avg_over_time(slo_observation_status{environment="$environment", stage=~"main|", type=~"web|api|git|ci-runners|pages|sidekiq"}[$__range])
+            avg_over_time(slo_observation_status{environment="$environment", stage=~"main|", type=~"' + keyServiceRegExp + '"}[$__range])
           )
         )',
         instant=true
       )
     ),
-  ], cols=6,rowHeight=5, startRow=1)
+  ], cols=6, rowHeight=5, startRow=1)
 )
-.addPanels(layout.grid([
+.addPanels(
+layout.grid([
     basic.slaTimeseries(
       title='SLA Trends - Aggregated',
       description="1w rolling average SLO adherence across all primary services. Higher is better.",
       yAxisLabel='SLA',
       query='
-        avg(avg_over_time(slo_observation_status{environment="gprd", stage=~"main|", type=~"pages|web|api|git|sidekiq|registry"}[7d]))
+        avg(avg_over_time(slo_observation_status{environment="gprd", stage=~"main|", type=~"' + keyServiceRegExp + '"}[7d]))
       ',
       legendFormat='gitlab.com SLA',
       intervalFactor=5,
     ),
-  ], cols=1,rowHeight=10, startRow=1001)
+  ], cols=1, rowHeight=10, startRow=1001)
 )
 
-.addPanel(row.new(title="Primary Services"),
+.addPanel(
+row.new(title="Primary Services"),
   gridPos={
       x: 0,
       y: 2000,
@@ -133,11 +144,12 @@ dashboard.new(
       h: 1,
   }
 )
-.addPanels(layout.grid([
+.addPanels(
+layout.grid([
     slaBarGauge(
       title="Primary Services Average Availability for Period",
       query='
-        sort(avg(avg_over_time(slo_observation_status{environment="$environment", stage=~"main|", type=~"web|api|git|ci-runners|pages|sidekiq"}[$__range])) by (type))
+        sort(avg(avg_over_time(slo_observation_status{environment="$environment", stage=~"main|", type=~"' + keyServiceRegExp + '"}[$__range])) by (type))
       ',
       legendFormat='{{ type }}'
     ),
@@ -146,15 +158,13 @@ dashboard.new(
       description="1w rolling average SLO adherence for primary services. Higher is better.",
       yAxisLabel='SLA',
       query='
-        avg(avg_over_time(slo_observation_status{environment="gprd", stage=~"main|", type=~"pages|web|api|git|sidekiq|registry"}[7d])) by (type)
+        avg(avg_over_time(slo_observation_status{environment="gprd", stage=~"main|", type=~"' + keyServiceRegExp + '"}[7d])) by (type)
       ',
       legendFormat='{{ type }}',
       intervalFactor=5,
     ),
-  ], cols=1,rowHeight=10, startRow=2001)
+  ], cols=1, rowHeight=10, startRow=2001)
 )
 + {
-  links+: platformLinks.services + platformLinks.triage
+  links+: platformLinks.services + platformLinks.triage,
 }
-
-

@@ -1,11 +1,43 @@
 # Patroni
 
-## Scaling the cluster up or down
+## Scaling the cluster up
 
-Increasing or decreasing the node count of `patroni` in an environment [variables][environment-variables],
-followed by a Terraform provisioning, should be enough to add or remove nodes to the
-Patroni cluster. A successful Chef run will start the `patroni` service will take
-care of doing the base backup replication and the streaming replication afterwards.
+1. Increase the node count of `patroni` in [terraform][environment-variables].
+1. Apply the terraform and wait for chef to converge.
+1. On the new box, `gitlab-patronictl list` and ensure that the other cluster
+   members are identical to those seen by running the same command on another
+   cluster member.
+1. `systemctl enable patroni && systemctl start patroni` (for some reason we do
+   not automate this yet, but this operation is rare).
+1. Follow the patroni logs. A pg_basebackup will take several hours, after which
+   point streaming replication will begin. Silence alerts as necessary.
+
+## Scaling the cluster down
+
+1. Using this method, we can only delete the highest index of patroni. Make sure
+   it isn't the primary!
+1. Take the replica out of the read replica pool, and ensure it doesn't become
+   the primary if we are unlucky enough to suffer a failover while scaling the
+   cluster down: follow the [replica maintenance](#replica-maintenance)
+   instructions.
+1. Decrease the node count of `patroni` in [terraform][environment-variables].
+   Carefully read the plan and apply the terraform.
+
+### Checking status
+
+`patroni` service is managed with systemd, so you can check the service status with `systemctl status patroni` and logs with `journalctl -u patroni` (it should be enabled and running).
+
+Run `gitlab-patronictl list` to check the state of the patroni cluster, you should see the new node join the cluster and go through the following states:
+- creating replica
+- starting
+- running
+
+the node will also be added to the consul DNS entry, you can verify that with:
+```
+$ dig @127.0.0.1 -p8600 +short replica.patroni.service.consul.
+```
+
+At the moment of writing the database is 4TB big and it takes ~3h for a new node to catch up.
 
 ## Cluster information
 
@@ -131,9 +163,44 @@ issue with the help of a DBRE before restarting.
 
 ## Replica Maintenance
 
-If clients are connecting to replicas by means of [service discovery][service-discovery]
-(as opposed to hard-coded list of hosts), you can remove a replica from the list of hosts
-used by the clients by enabling Consul service maintenance on the selected replica:
+If clients are connecting to replicas by means of [service
+discovery][service-discovery] (as opposed to hard-coded list of hosts), you can
+remove a replica from the list of hosts used by the clients by tagging it as not
+suitable for failing over and load balancing.
+
+1. `sudo systemctl stop chef-client && sudo systemctl disable chef-client`
+1. Add a `tags` section to `/var/opt/gitlab/patroni/patroni.yml` on the
+   node:
+
+   ```
+   tags:
+     nofailover: true
+     noloadbalance: true
+   ```
+
+1. `sudo systemctl reload patroni`
+1. Test the efficacy of that reload by checking for the node name
+   in the list of replicas:
+
+   ```
+   dig @127.0.0.1 -p 8600 db-replica.service.consul. SRV
+   ```
+
+    If the name is absent, then the reload worked.
+
+You can see an example of taking a node out of service [in this
+issue](https://gitlab.com/gitlab-com/gl-infra/production/issues/1061).
+
+### Legacy Method (Consul Maintenance)
+
+:warning: _This method only works if the clients are configured with
+a `replica.patroni.service.consul.` DNS record, it won't work properly if they
+are configured with `db-replica.service.consul.` record. Check
+`/var/opt/gitlab/gitlab-rails/etc/database.yml` before you proceed._
+
+In the past we have sometimes used consul directly to remove the replica from
+the replica DNS entry (bear in mind this does not prevent the node from becoming
+the primary).
 
 ```
 patroni-01-db-gstg $ consul maint -enable -service=patroni-replica -reason="Production issue #xyz"
@@ -142,7 +209,7 @@ patroni-01-db-gstg $ consul maint -enable -service=patroni-replica -reason="Prod
 You can verify the action by running:
 
 ```
-patroni-01-db-gstg $ dig @localhost -p8600 +short replica.patroni.service.consul. | grep $(hostname -I) | wc -l # Prints 0
+patroni-01-db-gstg $ dig @127.0.0.1 -p8600 +short replica.patroni.service.consul. | grep $(hostname -I) | wc -l # Prints 0
 ```
 
 Wait until all client connections are drained from the replica (it depends on the interval value set for the clients),
@@ -156,7 +223,7 @@ After you're done with the maintenance, disable Consul service maintenance and v
 
 ```
 patroni-01-db-gstg $ consul maint -disable -service=patroni-replica
-patroni-01-db-gstg $ dig @localhost -p8600 +short replica.patroni.service.consul. | grep $(hostname -I) | wc -l # Prints 1
+patroni-01-db-gstg $ dig @127.0.0.1 -p8600 +short replica.patroni.service.consul. | grep $(hostname -I) | wc -l # Prints 1
 ```
 
 ## Failover/Switchover
@@ -169,6 +236,104 @@ Failover and Switchover are similar in their end-result, still there are slight 
 
 That said, you can initiate any of them using `gitlab-patronictl switchover` or `gitlab-patronictl failover`
 and entering values when prompted.
+
+### Problems with replication after failover
+
+Sometimes, after a failover, the old primary's timeline will have continued and
+diverged from the new primary's timeline. Patroni will automatically attempt to
+`pg_rewind` the timeline of the old primary to a point at which it can begin
+replicating from the new primary, becoming healthy again. We have occasionally
+seen this fail, for example with a statement timeout.
+
+If for whatever reason you can't get the node to a healthy state and don't mind
+waiting several hours, you can reinitialise the node:
+
+```
+root@pg$ gitlab-patronictl reinit pg-ha-cluster patroni-XX-db-gprd.c.gitlab-production.internal
+```
+
+This command can be run from any member of the patroni cluster. It wipes the
+data directory, takes a pg_basebackup from the new primary, and begins
+replicating again.
+
+### Manual actions after failover
+
+#### Update statistics views on the new master
+
+Statistics views are instance-local and not replicated, although the statistics
+themselves are replicated
+([source](https://www.postgresql.org/message-id/CABUevEySGifJJh8c%2B4YDTyB%3Du-qUT7jA%2BYBgfgjEU_UAO2vGuw%40mail.gmail.com)).
+After a failover we usually receive an alert about too many dead tuples that,
+counter-intuitively, can be resolved with `ANALYZE` rather than `VACUUM`. See
+also [troubleshooting/postgres.md](../troubleshooting/postgres.md).
+
+1. Get a `gitlab-psql` shell on the new master. It's recommended to do this
+   inside `tmux` or some other mechanism for not terminating the process on
+   `ssh` disconnection (e.g. `nohup`).
+1. `SET statement_timeout=0;`. At the time of writing, a global
+   statement_timeout of 15s is in effect and would stop most `ANALYZE`
+   operations.
+1. `ANALYZE VERBOSE;`
+
+This may [become
+automated](https://gitlab.com/gitlab-com/gl-infra/infrastructure/issues/5841).
+
+### Diverged timeline WAL segments in GCS after failover
+
+Our primary Postgres node is configured to archive WAL segments to GCS. These
+segments are pulled by wal-e on another node in recovery mode, and replayed.
+This process acts as a continuous test of our ability to restore our database
+state from archived WAL segments. Sometimes, during a failover, both the old
+master and the new will have uploaded WAL segments, causing the DR archive that
+is consuming these segments from GCS to not be able to replay the diverged
+timeline. In the past we have solved this by rolling back the DR archive to an
+earlier state:
+
+1. In the GCE console: stop the machine
+1. Edit the machine: write down (or take a screenshot) of the attachment details
+   of **all** extra disks. Specfically, we want the custom name (if any) and the
+   order they are attached in.
+1. Detach the data disk and save the machine.
+1. In the GCE console, find the most recent snapshot of the data disk before the
+   incident occurred. Copy its ID.
+1. Find the data disk in GCE. Write down its name, zone, type (standard/SSD),
+   and labels.
+1. Delete the data disk.
+1. Create a new GCE disk with the same name, zone, and type as the old data
+   disk. Select the "snapshot" option as source and enter the snapshot ID.
+1. When the disk has finished creating, attach it to the stopped machine using
+   the GCE console.
+1. Save the machine and examine the order of attached disks. If they are not in
+   the same order as before, you will have to detach and reattach disks as
+   appropriate. This is necessary because unfortunately we still have code that
+   makes assumptions about the udev-ordering of disks (sdb, sdc etc).
+1. Start the machine.
+1. `ssh` to the machine and start postgres: `gitlab-ctl start postgresql`.
+1. Tail the log file at `/var/log/gitlab/postgresql/current`. You should see it
+   successfuly ingesting WAL segments in sequential order, e.g.: `LOG:  restored
+   log file "00000017000128AC00000087" from archive`.
+1. You should also see a message "FATAL:  the database system is starting up"
+   every 15s. These are due to attempted scrapes by the postgres exporter. After
+   a few minutes, these messages should stop and metrics from the machine should
+   be observable again.
+1. In prometheus, you should see the `pg_replication_lag` metric for this
+   instance begin to decrease. Recovery from GCS WAL segments is slow, and
+   during times of high traffic (when the postgres data ingestion rate is high)
+   recovery will slow. It might take days to recover, so be sure to silence any
+   replication lag alerts for enough time not to rudely wake the on-call.
+1. Check there is no terraform plan diff for the archival replicas. Run the
+   following for the gprd environment:
+
+   ```
+   tf plan -out plan -target module.postgres-dr-archive -target module.postgres-dr-delayed
+   ```
+
+   If there is a plan diff for mutable things like labels, apply it. If there is
+   a plan diff for more severe things like disk name, you might have made a
+   mistake and will have to repeat this whole procedure.
+
+This procedure is rather manual and lengthy, but this does not happen often and
+has no directly user-facing impact.
 
 ## Replacing a cluster with a new one
 

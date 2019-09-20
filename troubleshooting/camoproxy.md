@@ -34,8 +34,9 @@ Using mtail, we scrape the logs and count certain errors.  At this writing there
 
 If you need to generate a URL that you can pass through camoproxy to verify its behavior:
 1. ssh to one of the camoproxy nodes
-1. KEYARG=$(egrep -o -- '--key=[^ ]+' /etc/sv/camoproxy/run)
-1. echo https://user-content.gitlab-static.net$(/opt/camoproxy/bin/url-tool $KEYARG encode <URL>)
+1. KEY=$(grep 'GOCAMO_HMAC=' /etc/sv/camoproxy/run|cut -d= -f2|tr -d '"')
+1. URL=https://example.com/path/to/image.jpg
+1. echo https://user-content.gitlab-static.net$(/opt/camoproxy/bin/url-tool --key $KEY encode $URL)
 
 (NB: staging is at user-content.staging.gitlab-static.net; substitute the domain necessary, as the HMAC keys are not the same across both environments)
 
@@ -45,7 +46,7 @@ Alternatively, you can grab the camoproxy binaries from https://github.com/cactu
 
 It's unknown how useful these will be, but if it's alerting, maybe check to see if throughput is suddenly spiking or otherwise behaving badly:
 
-<https://dashboards.gitlab.net/d/i6kMBiIZk/camoproxy>
+<https://dashboards.gitlab.net/d/general-camoproxy/general-camoproxy>
 
 ## SSL certificate
 

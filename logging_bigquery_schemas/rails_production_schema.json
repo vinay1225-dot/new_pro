@@ -5,6 +5,11 @@
         "type": "STRING"
     },
     {
+        "mode": "NULLABLE",
+        "name": "insertId",
+        "type": "STRING"
+    },
+    {
         "fields": [
             {
                 "mode": "NULLABLE",
@@ -44,11 +49,6 @@
                 "mode": "NULLABLE",
                 "name": "tag",
                 "type": "STRING"
-            },
-            {
-                "mode": "NULLABLE",
-                "name": "compute_googleapis_com_resource_name",
-                "type": "STRING"
             }
         ],
         "mode": "NULLABLE",
@@ -56,105 +56,142 @@
         "type": "RECORD"
     },
     {
+        "mode": "REQUIRED",
         "name": "timestamp",
-        "type": "TIMESTAMP",
-        "mode": "REQUIRED"
+        "type": "TIMESTAMP"
     },
     {
+        "mode": "NULLABLE",
         "name": "receiveTimeStamp",
-        "type": "TIMESTAMP",
-        "mode": "NULLABLE"
+        "type": "TIMESTAMP"
     },
     {
-        "name": "jsonPayload",
-        "type": "RECORD",
         "fields": [
             {
+                "mode": "NULLABLE",
                 "name": "action",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "controller",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "correlation_id",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "db",
-                "type": "FLOAT",
-                "mode": "NULLABLE"
+                "type": "FLOAT"
             },
             {
+                "mode": "NULLABLE",
                 "name": "duration",
-                "type": "FLOAT",
-                "mode": "NULLABLE"
+                "type": "FLOAT"
             },
             {
+                "mode": "NULLABLE",
                 "name": "environment",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "fqdn",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
+                "name": "location",
+                "type": "STRING"
+            },
+            {
+                "mode": "NULLABLE",
                 "name": "format",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "method",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
+                "name": "hostname",
+                "type": "STRING"
+            },
+            {
+                "mode": "NULLABLE",
                 "name": "message",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "path",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "remote_ip",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "status",
-                "type": "INTEGER",
-                "mode": "NULLABLE"
+                "type": "INTEGER"
             },
             {
+                "mode": "NULLABLE",
                 "name": "ua",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "user_id",
-                "type": "INTEGER",
-                "mode": "NULLABLE"
+                "type": "INTEGER"
             },
             {
+                "mode": "NULLABLE",
                 "name": "username",
-                "type": "STRING",
-                "mode": "NULLABLE"
+                "type": "STRING"
             },
             {
+                "mode": "NULLABLE",
                 "name": "view",
-                "type": "FLOAT",
-                "mode": "NULLABLE"
+                "type": "FLOAT"
+            },
+            {
+                "mode": "NULLABLE",
+                "name": "route",
+                "type": "STRING"
+            },
+            {
+                "mode": "NULLABLE",
+                "name": "queue_duration",
+                "type": "FLOAT"
+            },
+            {
+                "fields": [
+                    {
+                        "mode": "NULLABLE",
+                        "name": "key",
+                        "type": "STRING"
+                    },
+                    {
+                        "mode": "NULLABLE",
+                        "name": "value",
+                        "type": "STRING"
+                    }
+                ],
+                "mode": "REPEATED",
+                "name": "params",
+                "type": "RECORD"
             }
         ],
-        "mode": "NULLABLE"
+        "mode": "NULLABLE",
+        "name": "jsonPayload",
+        "type": "RECORD"
     }
 ]

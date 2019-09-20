@@ -50,9 +50,12 @@ groups:
     labels:
       component: 'workers'
     expr: >
-      sum(avg_over_time(unicorn_active_connections{job="gitlab-unicorn"}[1m])) by (type, tier, stage, environment)
-      /
-      sum(max(unicorn_workers) without (pid)) by (type, tier, stage, environment)
+      clamp_max(
+        sum(avg_over_time(unicorn_active_connections{job=~"gitlab-(rails|unicorn)"}[1m])) by (type, tier, stage, environment)
+        /
+        sum(max(unicorn_workers) without (pid)) by (type, tier, stage, environment),
+        1
+      )
 
   # type: redis/redis cache, component: single_threaded_cpu
   - record: gitlab_component_saturation:ratio
@@ -66,12 +69,18 @@ groups:
         1
       )
 
-  # type: pgbouncer, component: single_threaded_cpu
+  # type: pgbouncer,patroni, component: pgbouncer_single_core
   - record: gitlab_component_saturation:ratio
     labels:
-      component: 'single_threaded_cpu'
+      component: 'pgbouncer_single_core'
     expr: >
-      max(1 - rate(node_cpu_seconds_total{type="pgbouncer", mode="idle"}[1m])) by (type, tier, stage, environment)
+      max(
+        sum(
+          rate(
+            namedprocess_namegroup_cpu_seconds_total{groupname=~"pgbouncer.*", type=~"pgbouncer|patroni"}[1m]
+          )
+        ) by (groupname, fqdn, type, tier, stage, environment)
+      ) by (type, tier, stage, environment)
 
   # type: pgbouncer, component: server_connections_pools
   - record: gitlab_component_saturation:ratio
@@ -80,17 +89,29 @@ groups:
     expr: >
       clamp_max(
         max(
-          max_over_time(pgbouncer_pools_server_active_connections{type="pgbouncer", user="gitlab"}[1m]) /
+          max_over_time(pgbouncer_pools_server_active_connections{user="gitlab"}[1m]) /
           (
             (
-              pgbouncer_pools_server_idle_connections{type="pgbouncer", user="gitlab"} +
-              pgbouncer_pools_server_active_connections{type="pgbouncer", user="gitlab"} +
-              pgbouncer_pools_server_testing_connections{type="pgbouncer", user="gitlab"} +
-              pgbouncer_pools_server_used_connections{type="pgbouncer", user="gitlab"} +
-              pgbouncer_pools_server_login_connections{type="pgbouncer", user="gitlab"}
+              pgbouncer_pools_server_idle_connections{user="gitlab"} +
+              pgbouncer_pools_server_active_connections{user="gitlab"} +
+              pgbouncer_pools_server_testing_connections{user="gitlab"} +
+              pgbouncer_pools_server_used_connections{user="gitlab"} +
+              pgbouncer_pools_server_login_connections{user="gitlab"}
             )
             > 0
           )
+      ) by (type, tier, stage, environment), 1)
+
+  # type: postgres-delayed, postgres-archive, patroni
+  - record: gitlab_component_saturation:ratio
+    labels:
+      component: 'active_db_connections'
+    expr: >
+      clamp_max(
+        max(
+          sum without(state) (pg_stat_activity_count{datname="gitlabhq_production", state!="idle"})
+          /
+          (sum without(state) (pg_stat_activity_count{datname="gitlabhq_production"}) > 0)
       ) by (type, tier, stage, environment), 1)
 
   # type: redis, redis-cache, component: redis_clients
@@ -105,28 +126,113 @@ groups:
         redis_config_maxclients
       ) by (environment, tier, type, stage)
 
+  # type: *
+  # cadvisor cgroup memory saturation limits
+  - record: gitlab_component_saturation:ratio
+    labels:
+      component: 'cgroup_memory'
+    expr: >
+      max(
+        (
+          container_memory_usage_bytes{id="/system.slice/gitlab-runsvdir.service"} -
+          container_memory_cache{id="/system.slice/gitlab-runsvdir.service"} -
+          container_memory_swap{id="/system.slice/gitlab-runsvdir.service"}
+        )
+        /
+        container_spec_memory_limit_bytes{id="/system.slice/gitlab-runsvdir.service"}
+      ) by (environment, tier, type, stage)
+
+  # type: gitaly
+  # Disk read IOPS saturation based on GCP estimate of 1200MB/s limit
+  # This value can be found in the GCP console, here https://console.cloud.google.com/compute/disksDetail/zones/us-east1-d/disks/file-35-stor-gprd-data?project=gitlab-production
+  # For now, we hard-code the device as `sdb`
+  - record: gitlab_component_saturation:ratio
+    labels:
+      component: 'disk_sustained_read_iops'
+    expr: >
+      max(
+        rate(node_disk_reads_completed_total{type="gitaly", device="sdb"}[1m]) / (60000)
+      ) by (environment, tier, type, stage)
+
+  # type: gitaly
+  # Disk write IOPS saturation based on GCP estimate of 400MB/s limit
+  # This value can be found in the GCP console, here https://console.cloud.google.com/compute/disksDetail/zones/us-east1-d/disks/file-35-stor-gprd-data?project=gitlab-production
+  # For now, we hard-code the device as `sdb`
+  - record: gitlab_component_saturation:ratio
+    labels:
+      component: 'disk_sustained_write_iops'
+    expr: >
+      max(
+        rate(node_disk_writes_completed_total{type="gitaly", device="sdb"}[1m]) / (30000)
+      ) by (environment, tier, type, stage)
+
+  # type: gitaly
+  # Disk read throughput saturation based on GCP estimate of 1200MB/s limit
+  # This value can be found in the GCP console, here https://console.cloud.google.com/compute/disksDetail/zones/us-east1-d/disks/file-35-stor-gprd-data?project=gitlab-production
+  # For now, we hard-code the device as `sdb`
+  - record: gitlab_component_saturation:ratio
+    labels:
+      component: 'disk_sustained_read_throughput'
+    expr: >
+      max(
+        rate(node_disk_read_bytes_total{type="gitaly", device="sdb"}[1m]) / (1200 * 1024 * 1024)
+      ) by (environment, tier, type, stage)
+
+  # type: gitaly
+  # Disk write throughput saturation based on GCP estimate of 400MB/s limit
+  # This value can be found in the GCP console, here https://console.cloud.google.com/compute/disksDetail/zones/us-east1-d/disks/file-35-stor-gprd-data?project=gitlab-production
+  # For now, we hard-code the device as `sdb`
+  - record: gitlab_component_saturation:ratio
+    labels:
+      component: 'disk_sustained_write_throughput'
+    expr: >
+      max(
+        rate(node_disk_written_bytes_total{type="gitaly", device="sdb"}[1m]) / (400 * 1024 * 1024)
+      ) by (environment, tier, type, stage)
+
   # Aggregate over all components within a service using max
   - record: gitlab_service_saturation:ratio
     expr: >
       max by (environment, tier, type, stage) (gitlab_component_saturation:ratio)
 
-  # Calculate the "sapdex" - the saturation apdex for the metric. 1 < less then soft limit, 0.5 < hard limit, else 0
-  - record: gitlab_component_saturation:ratio:sapdex
+  # Open file descriptors
+  - record: gitlab_component_saturation:ratio
+    labels:
+      component: 'open_fds'
     expr: >
-      clamp_min(gitlab_component_saturation:ratio <= on(component) group_left slo:max:soft:gitlab_component_saturation:ratio, 1)
-      or
-      clamp_min(clamp_max(gitlab_component_saturation:ratio > on(component) group_left slo:max:soft:gitlab_component_saturation:ratio, 0.5), 0.5)
-      or
-      clamp_max(gitlab_component_saturation:ratio > on(component) group_left slo:max:hard:gitlab_component_saturation:ratio, 0)
+      max(
+        max_over_time(process_open_fds[1m])
+        /
+        max_over_time(process_max_fds[1m])
+      ) by (environment, type, tier, stage)
+  - record: gitlab_component_saturation:ratio
+    labels:
+      component: 'open_fds'
+    expr: >
+      max(
+        max_over_time(ruby_file_descriptors[1m])
+        /
+        max_over_time(ruby_process_max_fds[1m])
+      ) by (environment, type, tier, stage)
 
 # Unlike other service metrics, we record the stats for each component independently
 - name: GitLab Saturation Ratios Stats
   interval: 5m
   rules:
-  # Average values for each service, over a week
+
+  # ----------------------------------------------
+  # Linear Interpolation
+  # ----------------------------------------------
+
+  # Average values for each component, over a week
   - record: gitlab_component_saturation:ratio:avg_over_time_1w
     expr: >
       avg_over_time(gitlab_component_saturation:ratio[1w])
+
+  # Stddev for each component, over a week
+  - record: gitlab_component_saturation:ratio:stddev_over_time_1w
+    expr: >
+      stddev_over_time(gitlab_component_saturation:ratio[1w])
 
   # Using linear week-on-week growth, what prediction to we have for 2w from now?
   - record: gitlab_component_saturation:ratio:predict_linear_2w
@@ -137,14 +243,3 @@ groups:
   - record: gitlab_component_saturation:ratio:predict_linear_30d
     expr: >
       predict_linear(gitlab_component_saturation:ratio:avg_over_time_1w[1w], 86400 * 30)
-
-  # Sapdex, average for week
-  - record: gitlab_component_saturation:ratio:sapdex:avg_over_time_1w
-    expr: >
-      avg_over_time(gitlab_component_saturation:ratio:sapdex[1w])
-
-  # Sapdex long term trend forecasting
-  # Using linear week-on-week growth, what prediction to we have for 30d from now?
-  - record: gitlab_component_saturation:ratio:sapdex:avg_over_time_1w:predict_linear_30d
-    expr: >
-      predict_linear(gitlab_component_saturation:ratio:sapdex:avg_over_time_1w[1w], 86400 * 30)

@@ -2,10 +2,28 @@ groups:
 - name: GitLab Component Apdex Scores
   interval: 1m
   rules:
+
+  # registry
+  # Satisfied -> 1 seconds
+  # Acceptable -> 2.5 seconds
+  - record: gitlab_component_apdex:ratio
+    labels:
+      type: 'registry'
+      tier: 'sv'
+      component: 'registry'
+    expr: >
+      (
+        sum(rate(registry_http_request_duration_seconds_bucket{type="registry", le="1"}[1m])) by (environment, type, tier, stage)
+      +
+        sum(rate(registry_http_request_duration_seconds_bucket{type="registry", le="2.5"}[1m])) by (environment, type, tier, stage)
+      )
+      /
+      2 / sum(rate(registry_http_request_duration_seconds_bucket{type="registry", le="+Inf"}[1m])) by (environment, type, tier, stage)
+
   # haproxy:http traffic - NON-CANARY
   - record: gitlab_component_apdex:ratio
     labels:
-      type: 'haproxy'
+      type: 'frontend'
       tier: 'lb'
       stage: 'main'
     expr: >
@@ -23,7 +41,7 @@ groups:
 
   - record: gitlab_component_apdex:weight:score
     labels:
-      type: 'haproxy'
+      type: 'frontend'
       tier: 'lb'
       stage: 'main'
     expr: >
@@ -40,7 +58,7 @@ groups:
   # haproxy:http traffic - CANARY
   - record: gitlab_component_apdex:ratio
     labels:
-      type: 'haproxy'
+      type: 'frontend'
       tier: 'lb'
       stage: 'cny'
     expr: >
@@ -58,7 +76,7 @@ groups:
 
   - record: gitlab_component_apdex:weight:score
     labels:
-      type: 'haproxy'
+      type: 'frontend'
       tier: 'lb'
       stage: 'cny'
     expr: >
@@ -75,7 +93,7 @@ groups:
   # haproxy:ssh traffic
   - record: gitlab_component_apdex:ratio
     labels:
-      type: 'haproxy'
+      type: 'frontend'
       tier: 'lb'
       stage: 'main'
       component: 'backend-ssh'
@@ -86,7 +104,7 @@ groups:
 
   - record: gitlab_component_apdex:weight:score
     labels:
-      type: 'haproxy'
+      type: 'frontend'
       tier: 'lb'
       stage: 'main'
       component: 'backend-ssh'

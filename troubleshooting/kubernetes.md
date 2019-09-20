@@ -66,4 +66,66 @@ wish.
 
 The desired event data for this style of search will exist in `json.textPayload`
 
+# Alerts
 
+## HighThrottleRate
+
+This is triggered when a container is surpassing the CPU limits governed by the
+configuration of the Pod.  This has the potential to lead to poor performance of
+this container.  One should investigate the performance of this container over
+the course of time and determine if there's unnecessary pressure on the node, or
+a potentially misbehaving Pod.  Looking at the logs for said Pod and overall CPU
+usage of the pod and node for which that pod lives should lead to necessary
+discoveries and future corrective actions.
+
+Keep in mind that there are some configurations we cannot manage.  It's safe to
+say that nay Pod that exists in the `kube-system` namespace we may not have
+control of the limits as these are created by GKE.  If a Pod is consistently
+triggering this alert for a component we do not manage, check for node pressure
+and consider opening a line of communication with Google to discuss measures to
+alleviate the pain.  We alert for containers that trigger this alert that we
+cannot manage as any container in this namespace is critical for the successful
+operation of the cluster and it's health overall.
+
+## GKENodeCount
+
+### HPAScaleCapability
+
+The Horizontal Pod Autoscaler has reached it's maximum configured allowed Pods.
+Start troubleshooting by validating the service is able to successfully handle
+requests.
+
+When we reach this threshold we must start an investigation into the load that
+this service is taking to see if there's been a trend upward that we simply
+haven't noticed over time, or if there's a problem processing requests which led
+to an undesired effect of scaling upwards out of normal.
+
+Utilize the dashboard https://dashboards.gitlab.net/d/oWe9aYxmk/pod-metrics and
+observe the Active Replicaset over the course of time to take into account how
+many Pods we've been scaling.  Normally we scale with traffic.  If there are
+spikes, something must be amiss and is a signal that we need to investigate
+further.  If we've been scaling up over a lengthy period of time (say months),
+it may simply mean we need to bump the amount of maximum allowed Pods.
+
+During the investigation, take a look at the HPA configuration to understand
+what drives the scaling needs.  This will help determine what signals to look
+deeper into and drive the conversation for what changes need to be made.  When
+making changes to the HPA we need to ensure that the cluster will not endure
+undue stress.
+
+### GKENodeCountCritical
+
+We have reached the maximum configured amount of nodes allowed by a node pool.
+We must make changes to the node pool configuration.  This is maintained in
+Terraform here: [ops.gitlab.net/.../gitlab-com-infrastructure/.../gprd/main.tf](https://ops.gitlab.net/gitlab-com/gitlab-com-infrastructure/blob/e3f1f5edfe90d98f4e410bfc5cc79b265b5fa1f0/environments/gprd/main.tf#L1797)
+
+### GKENodeCountHigh
+
+We are close to reaching the maximum allowed nodes in the node_pool
+configuration as defined by terraform.  It would be wise to open an issue an
+investigate node resource contention and determine if we should consider raising
+this limit or target a service which may be using more resources than considered
+normal.
+
+Trends for node scaling can be seen using this metric over the course of time:
+`count(stackdriver_gce_instance_compute_googleapis_com_instance_uptime{instance_name=~"gke-gprd.*"})`

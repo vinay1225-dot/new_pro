@@ -29,8 +29,8 @@ on-boarding new team member
 
 ## Checklists
 
-- [EMOC](on-call/eoc.md)
-- [IMOC](on-call/imoc.md)
+- [Engineer on Call (EOC)](on-call/checklists/eoc.md)
+- [Incident Manager on Call (IMOC)](on-call/checklists/imoc.md)
 
 To start with the right foot let's define a set of tasks that are nice things to do before you go any further in your week
 
@@ -190,6 +190,7 @@ During an incident there are at least 2 roles, and one more optional
 * [Add a new secondary replica](howto/postgresql-replica.md)
 * [Database backups](howto/using-wale-gpg.md)
 * [Database backups restore testing](https://gitlab.com/gitlab-restore/postgres-01.db.prd.gitlab.com/)
+* [Rebuild a corrupt index](howto/postgresql.md#rebuild-a-corrupt-index)
 
 ### Frontend Services
 
@@ -280,7 +281,8 @@ During an incident there are at least 2 roles, and one more optional
 * [Start a rails console in the staging environment](howto/staging-environment.md#run-a-rails-console-in-staging-environment)
 * [Start a redis console in the staging environment](howto/staging-environment.md#run-a-redis-console-in-staging-environment)
 * [Start a psql console in the staging environment](howto/staging-environment.md#run-a-psql-console-in-staging-environment)
-* [Force a failover with postgres or redis](howto/manage-pacemaker.md#force-a-failover)
+* [Force a failover with postgres](howto/patroni-management.md#failoverswitchover)
+* [Force a failover with redis](howto/manage-pacemaker.md#force-a-failover)
 * [Use aptly](howto/aptly.md)
 * [Disable PackageCloud](howto/stop-or-start-packagecloud.md)
 * [Re-index a package in PackageCloud](howto/reindex-package-in-packagecloud.md)
@@ -422,4 +424,3 @@ Please see the [contribution guidelines](CONTRIBUTING.md)
 [slack-alerts-gstg]:                https://gitlab.slack.com/channels/alerts-gstg
 [slack-incident-management]:        https://gitlab.slack.com/channels/incident-management
 [slack-production]:                 https://gitlab.slack.com/channels/production
-

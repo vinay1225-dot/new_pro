@@ -7,8 +7,8 @@ stages:
   - test
   - deploy
   - alertmanager
-  - deploy-rules-gstg
-  - deploy-rules-pre
+  - deploy-rules
+  - deploy-rules-production
 
 .deploy-rules:
   extends: .rules-artifacts
@@ -31,15 +31,19 @@ stages:
       - rules-k8s
 
 .dashboards:
-  image:
-    name: registry.gitlab.com/gitlab-com/runbooks/jsonnet:latest
-    entrypoint: ["/bin/sh", "-c"]
+  image: registry.gitlab.com/gitlab-com/runbooks/runtools_build:latest
   before_script:
     - dashboards/bundler.sh # Install jsonnet bundles
     - dashboards/generate-mixins.sh # Generate dashboards from mixins
   only:
     variables:
       - $CI_PROJECT_URL =~ /^https:\/\/gitlab\.com\/.*/
+
+verify:
+  stage: test
+  image: registry.gitlab.com/gitlab-com/runbooks/runtools_build:latest
+  script:
+    - make verify
 
 test-rules:
   extends: .rules-artifacts
@@ -66,12 +70,18 @@ rspec:
 deploy-rules-gstg:
   environment: gstg
   extends: .deploy-rules
-  stage: deploy-rules-gstg
+  stage: deploy-rules
 
 deploy-rules-pre:
   environment: pre
   extends: .deploy-rules
-  stage: deploy-rules-pre
+  stage: deploy-rules
+
+deploy-rules-production:
+  environment: gprd
+  extends: .deploy-rules
+  when: manual
+  stage: deploy-rules-production
 
 update-alert-manager:
   stage: alertmanager
@@ -100,9 +110,7 @@ test:
 
 deploy_elastic_watcher_updates:
   stage: deploy
-  image:
-    name: registry.gitlab.com/gitlab-com/runbooks/jsonnet:latest
-    entrypoint: ["/bin/sh", "-c"]
+  image: registry.gitlab.com/gitlab-com/runbooks/runtools_build:latest
   script:
   - elastic-watcher/update-alerts.sh
   only:
@@ -160,7 +168,7 @@ deploy_dashboards:
     refs:
       - master
 
-build_jsonnet_image:
+build_runtools_build_image:
   stage: images
   image: docker:stable
   services:
@@ -172,8 +180,7 @@ build_jsonnet_image:
     - apk add curl git
     - git clone https://github.com/google/jsonnet.git
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
-    - cd jsonnet && docker build -t registry.gitlab.com/gitlab-com/runbooks/jsonnet-intermediate:latest . && cd ..
-    - docker build -t registry.gitlab.com/gitlab-com/runbooks/jsonnet:latest images/jsonnet/
-    - docker push registry.gitlab.com/gitlab-com/runbooks/jsonnet:latest
-
+    - cd jsonnet && docker build -t registry.gitlab.com/gitlab-com/runbooks/runtools_build-intermediate:latest . && cd ..
+    - docker build -t registry.gitlab.com/gitlab-com/runbooks/runtools_build:latest images/runtools_build/
+    - docker push registry.gitlab.com/gitlab-com/runbooks/runtools_build:latest
   when: manual
