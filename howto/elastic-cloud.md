@@ -9,6 +9,11 @@ Current capacity:
 * 5 nodes per zone (total 15)
 * 64GiB RAM, 1.5TiB storage per node
 
+## Cluster set up
+
+1. configure Index patterns in Kibana
+  - use json.time (timestamp of the log) rather than timestamp (when the log was received by the cluster)
+
 ## Configure Storage Watermarks
 
 When reaching the storage low-watermark on a node, shards will be moved to another node but if all nodes have reached the low-watermark, the cluster will stop storing any data. As per suggestion from Elastic (https://gitlab.com/gitlab-com/gl-infra/production/issues/616#note_124839760) we should use absolute byte values instead of percentages for setting the watermarks and, given the actual shard sizes, we should leave enough headroom for writing to shards, segment merging and node failure.
