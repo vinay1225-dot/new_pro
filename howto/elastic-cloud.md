@@ -9,9 +9,26 @@ Current capacity:
 * 5 nodes per zone (total 15)
 * 64GiB RAM, 1.5TiB storage per node
 
-## Cluster set up
+## Logging cluster set up
 
-1. configure Index patterns in Kibana
+1. Go to Elastic Cloud web UI, login using credentials in 1password
+1. Create a deployment:
+    1. in GCP
+    1. region closest to the rest of our infra (US Central 1)
+    1. use latest version of Elastic
+    1. hot-warm architecture
+    1. Customize deployment:
+        1. set VM spec and number for worker nodes
+        1. set VM spec for Kibana
+    1. Configure index management (keep the default settings)
+    1. save password for user `elastic` in 1password (rotate if necessary)
+1. Create users and their roles using Kibana
+    1. pubsubuser
+    1. log-proxy
+1. Create ILM policy using a script in esc-tools
+1. Create index templates, alias and first index using a script in esc-tools
+1. Start sending logs to the cluster
+1. Configure index patterns in Kibana (logs have to be present in the cluster):
   - where possible, use json.time (timestamp of the log) rather than timestamp (when the log was received by the cluster)
   - it's currently impossible to configure index patterns through api: https://github.com/elastic/kibana/issues/2310 and https://github.com/elastic/kibana/issues/3709
 
