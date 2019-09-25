@@ -224,9 +224,9 @@ local seriesOverrides = import 'series_overrides.libsonnet';
   networkTrafficGraph(
     title="Node Network Utilization",
     description="Network utilization",
-    sendQuery,
+    sendQuery=true,
     legendFormat='{{ fqdn }}',
-    receiveQuery,
+    receiveQuery=true,
     intervalFactor=3,
     legend_show=true
   ):: graphPanel.new(
