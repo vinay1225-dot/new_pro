@@ -2,10 +2,64 @@ local grafana = import 'grafonnet/grafana.libsonnet';
 local promQuery = import 'prom_query.libsonnet';
 local graphPanel = grafana.graphPanel;
 local grafana = import 'grafonnet/grafana.libsonnet';
+local heatmapPanel = grafana.heatmapPanel;
 local row = grafana.row;
 local seriesOverrides = import 'series_overrides.libsonnet';
+local singlestatPanel = grafana.singlestat;
 
 {
+  heatmap(
+    title="Heatmap",
+    description="",
+    query="",
+    legendFormat='',
+    format='short',
+    interval="1m",
+    intervalFactor=3,
+    yAxisLabel='',
+    legend_show=true,
+    linewidth=2
+    ):: heatmapPanel.new(
+    title,
+    description=description,
+    datasource="$PROMETHEUS_DS",
+    legend_show=false,
+  )
+  .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor)),
+
+  singlestat(
+    title="SingleStat",
+    description="",
+    query="",
+    colors=[
+      '#299c46',
+      'rgba(237, 129, 40, 0.89)',
+      '#d44a3a',
+    ],
+    legendFormat='',
+    format='percentunit',
+    gaugeMinValue=0,
+    gaugeMaxValue=100,
+    gaugeShow=false,
+    instant=true,
+    interval="1m",
+    intervalFactor=3,
+    thresholds='',
+    yAxisLabel='',
+    legend_show=true,
+    linewidth=2
+    ):: singlestatPanel.new(
+    title,
+    description=description,
+    datasource="$PROMETHEUS_DS",
+    colors=colors,
+    format=format,
+    gaugeMaxValue=gaugeMaxValue,
+    gaugeShow=gaugeShow,
+    thresholds=thresholds,
+  )
+  .addTarget(promQuery.target(query, instant)),
+
   timeseries(
     title="Timeseries",
     description="",

@@ -10,6 +10,12 @@ local template = grafana.template;
     refresh='load',
     sort=1,
   ),
+  namespace:: template.new(
+    'namespace',
+    '$PROMETHEUS_DS',
+    'label_values(kube_pod_container_info{environment="$environment"}, namespace)',
+    refresh='load',
+  ),
   ds:: template.datasource(
     'PROMETHEUS_DS',
     'prometheus',
