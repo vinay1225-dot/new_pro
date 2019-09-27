@@ -14,7 +14,7 @@
         - [BigQuery](#bigquery)
     - [Overview](#overview)
         - [What are we logging?](#what-are-we-logging)
-        - [Overview](#overview-1)
+        - [Logging infrastructure](#logging-infrastructure)
         - [FAQ](#faq)
             - [Why are we using StackDriver in addition to ElasticSearch?](#why-are-we-using-stackdriver-in-addition-to-elasticsearch)
             - [Why are we using pubsub queues instead of sending logs from fluentd directly to Elastic?](#why-are-we-using-pubsub-queues-instead-of-sending-logs-from-fluentd-directly-to-elastic)

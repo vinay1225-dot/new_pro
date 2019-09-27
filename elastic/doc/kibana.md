@@ -23,7 +23,7 @@ Kibana on logging clusters can be reached at:
 - https://log.gprd.gitlab.net
 - https://nonprod-log.gitlab.net
 
-Kibana for other (e.g. indexing) clusters can reached by going to Elastic Cloud web UI and clicking on the Kibana URL in the deployment's page
+Kibana for other (e.g. indexing) clusters can be reached by going to Elastic Cloud web UI and clicking on the Kibana URL in the deployment's page
 
 # Timezone in Kibana
 
