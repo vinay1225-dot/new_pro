@@ -1,3 +1,26 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Introduction](#introduction)
+- [Troubleshooting](#troubleshooting)
+    - [Overall health](#overall-health)
+    - [Fluentd](#fluentd)
+    - [PubSub](#pubsub)
+    - [pubsubbeat](#pubsubbeat)
+    - [ES cluster](#es-cluster)
+    - [esc-tools](#esc-tools)
+    - [Ideas of things to check (based on previous incidents)](#ideas-of-things-to-check-based-on-previous-incidents)
+- [Failover and Recovery procedures](#failover-and-recovery-procedures)
+    - [Fluentd](#fluentd-1)
+    - [PubSub](#pubsub-1)
+    - [pubsubbeat](#pubsubbeat-1)
+    - [ES cluster](#es-cluster-1)
+    - [esc-tools](#esc-tools-1)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
 # Introduction #
 
 # Troubleshooting #

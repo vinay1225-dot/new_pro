@@ -1,26 +1,55 @@
-# Log view in Kibana
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-## Kibana URL
+- [Kibana URL](#kibana-url)
+- [Timezone in Kibana](#timezone-in-kibana)
+- [Discover application](#discover-application)
+    - [Searching and analyzing logs (filtering)](#searching-and-analyzing-logs-filtering)
+    - [Elastic Query DSL](#elastic-query-dsl)
+    - [Lucene Query Language](#lucene-query-language)
+    - [Kibana Query Language](#kibana-query-language)
+- [Visualize application](#visualize-application)
+- [Dashboard application](#dashboard-application)
+- [Kubernetes](#kubernetes)
 
-Kibana can be reached on https://log.gitlab.net
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+
+# Kibana URL
+
+Kibana on logging clusters can be reached at:
+- https://log.gprd.gitlab.net
+- https://nonprod-log.gitlab.net
+
+Kibana for other (e.g. indexing) clusters can reached by going to Elastic Cloud web UI and clicking on the Kibana URL in the deployment's page
+
+# Timezone in Kibana
 
 Before providing screens/information from Kibana, set/check that your timezone in Kibana is UTC. It will be easier to understand provided information for you and other team members. Timezone can be set in `Settings->Advanced->dateFormat:tz->UTC`.
 
-## Filter logs by queries
+# Discover application
 
-In Kibana `program` stands for application and `hostname` for machine where it runs. For example, to find all logs from `worker2` for `mailroom` you need to provide this query - `program:mailroom AND hostname:worker2`
+## Searching and analyzing logs (filtering)
 
-Queries can be constructed via constructor, but there is only top 5 values to select for each parameter for specified amount of time. By default it is last 15 minutes.
+https://www.elastic.co/guide/en/kibana/current/field-filter.html
 
-## Kubernetes
+## Elastic Query DSL
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html
+
+## Lucene Query Language
+
+https://www.elastic.co/guide/en/kibana/current/lucene-query.html
+
+## Kibana Query Language
+
+# Visualize application
+
+# Dashboard application
+
+# Kubernetes
 
 Look for assistance with Kubernetes Logs here:
 [../troubleshooting/kubernetes.md](../troubleshooting/kubernetes.md)
-
-
-## Adding new log patterns to parse
-
-By modifying file `files/default/logstash-gitlab.conf` in `gitlab-elk` cookbook you can add/remove/modify parsing of logstash file parsing.
-
-This file contains grok patterns, which can be tested in - https://grokdebug.herokuapp.com/ (simple) or http://grokconstructor.appspot.com/do/match (more advanced)
-

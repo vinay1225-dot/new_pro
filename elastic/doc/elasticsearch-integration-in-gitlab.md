@@ -1,3 +1,33 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [ES integration](#es-integration)
+    - [ES integration docs & video](#es-integration-docs-&-video)
+    - [ES integration admin page](#es-integration-admin-page)
+    - [Enabling ES integration](#enabling-es-integration)
+    - [Disabling ES integration](#disabling-es-integration)
+    - [When disabling ES integration did not help](#when-disabling-es-integration-did-not-help)
+    - [Disabling elastic backed search, but leaving the integration on](#disabling-elastic-backed-search-but-leaving-the-integration-on)
+    - [Creating and removing indexes](#creating-and-removing-indexes)
+        - [TLDR](#tldr)
+        - [Recreating an index](#recreating-an-index)
+        - [Creating an index (shards considerations)](#creating-an-index-shards-considerations)
+    - [Shards management](#shards-management)
+    - [Cleaning up index](#cleaning-up-index)
+- [Indexer](#indexer)
+    - [Overview](#overview)
+    - [Sidekiq jobs](#sidekiq-jobs)
+    - [Elastic_indexer_worker.rb](#elastic_indexer_workerrb)
+    - [Elastic_commit_indexer_worker.rb](#elastic_commit_indexer_workerrb)
+    - [Triggering indexing](#triggering-indexing)
+    - [Impact on gitlab](#impact-on-gitlab)
+    - [Impact on Elastic cluster](#impact-on-elastic-cluster)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+
 # ES integration #
 
 ## ES integration docs & video ##

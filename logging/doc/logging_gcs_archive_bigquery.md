@@ -1,3 +1,22 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Loading StackDriver(SD) Archives from Google Cloud Storage (GCS) into BiqQuery](#loading-stackdriversd-archives-from-google-cloud-storage-gcs-into-biqquery)
+    - [Summary](#summary)
+        - [Why](#why)
+        - [What](#what)
+- [How](#how)
+    - [Using the UI](#using-the-ui)
+    - [Alternative: Starting from an existing schema](#alternative-starting-from-an-existing-schema)
+    - [Example Queries](#example-queries)
+        - [Find the most used Source-IP-Addresses for a User](#find-the-most-used-source-ip-addresses-for-a-user)
+        - [Find Actions by User and respective Paths Performed from a given IP-Address](#find-actions-by-user-and-respective-paths-performed-from-a-given-ip-address)
+        - [Count the Number of Repositories a User has Archived and Downloaded](#count-the-number-of-repositories-a-user-has-archived-and-downloaded)
+- [TODO](#todo)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Loading StackDriver(SD) Archives from Google Cloud Storage (GCS) into BiqQuery
 
 ## Summary

@@ -1,3 +1,20 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Elastic Cloud](#elastic-cloud)
+    - [Logging cluster set up](#logging-cluster-set-up)
+    - [Configure Storage Watermarks](#configure-storage-watermarks)
+        - [Setting Storage Watermarks](#setting-storage-watermarks)
+    - [Resizing cluster](#resizing-cluster)
+        - [Adding new availability zones](#adding-new-availability-zones)
+        - [Resizing instances](#resizing-instances)
+    - [Monitoring](#monitoring)
+    - [Alerting](#alerting)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
 # Elastic Cloud
 
 **Elastic Vendor Tracker**: https://gitlab.com/gitlab-com/gl-infra/elastic/issues

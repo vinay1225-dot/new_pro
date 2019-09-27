@@ -1,3 +1,18 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [How to run commands for ES](#how-to-run-commands-for-es)
+- [How to check cluster health](#how-to-check-cluster-health)
+- [How to view shards distribution](#how-to-view-shards-distribution)
+- [How to move (relocate) shard from one ES instance to another one (ES 5.x)](#how-to-move-relocate-shard-from-one-es-instance-to-another-one-es-5x)
+- [Current node allocation](#current-node-allocation)
+- [Number of threads](#number-of-threads)
+- [Current logstash template](#current-logstash-template)
+- [Create new index](#create-new-index)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ### How to run commands for ES
 
 1. ES on `log-esX` is accessible from the logstash node (log.gitlab.net).
