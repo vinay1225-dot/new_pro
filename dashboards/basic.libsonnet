@@ -9,28 +9,28 @@ local singlestatPanel = grafana.singlestat;
 
 {
   heatmap(
-    title="Heatmap",
-    description="",
-    query="",
+    title='Heatmap',
+    description='',
+    query='',
     legendFormat='',
     format='short',
-    interval="1m",
+    interval='1m',
     intervalFactor=3,
     yAxisLabel='',
     legend_show=true,
     linewidth=2
-    ):: heatmapPanel.new(
+  ):: heatmapPanel.new(
     title,
     description=description,
-    datasource="$PROMETHEUS_DS",
+    datasource='$PROMETHEUS_DS',
     legend_show=false,
   )
-  .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor)),
+      .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor)),
 
   singlestat(
-    title="SingleStat",
-    description="",
-    query="",
+    title='SingleStat',
+    description='',
+    query='',
     colors=[
       '#299c46',
       'rgba(237, 129, 40, 0.89)',
@@ -42,42 +42,42 @@ local singlestatPanel = grafana.singlestat;
     gaugeMaxValue=100,
     gaugeShow=false,
     instant=true,
-    interval="1m",
+    interval='1m',
     intervalFactor=3,
     thresholds='',
     yAxisLabel='',
     legend_show=true,
     linewidth=2
-    ):: singlestatPanel.new(
+  ):: singlestatPanel.new(
     title,
     description=description,
-    datasource="$PROMETHEUS_DS",
+    datasource='$PROMETHEUS_DS',
     colors=colors,
     format=format,
     gaugeMaxValue=gaugeMaxValue,
     gaugeShow=gaugeShow,
     thresholds=thresholds,
   )
-  .addTarget(promQuery.target(query, instant)),
+      .addTarget(promQuery.target(query, instant)),
 
   timeseries(
-    title="Timeseries",
-    description="",
-    query="",
+    title='Timeseries',
+    description='',
+    query='',
     legendFormat='',
     format='short',
-    interval="1m",
+    interval='1m',
     intervalFactor=3,
     yAxisLabel='',
     legend_show=true,
     linewidth=2
-    ):: graphPanel.new(
+  ):: graphPanel.new(
     title,
     description=description,
-    sort="decreasing",
+    sort='decreasing',
     linewidth=linewidth,
     fill=0,
-    datasource="$PROMETHEUS_DS",
+    datasource='$PROMETHEUS_DS',
     decimals=0,
     legend_show=legend_show,
     legend_values=true,
@@ -89,14 +89,14 @@ local singlestatPanel = grafana.singlestat;
     legend_alignAsTable=true,
     legend_hideEmpty=true,
   )
-  .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
-  .resetYaxes()
-  .addYaxis(
+      .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
+      .resetYaxes()
+      .addYaxis(
     format=format,
     min=0,
     label=yAxisLabel,
   )
-  .addYaxis(
+      .addYaxis(
     format='short',
     max=1,
     min=0,
@@ -104,22 +104,22 @@ local singlestatPanel = grafana.singlestat;
   ),
 
   queueLengthTimeseries(
-    title="Timeseries",
-    description="",
-    query="",
+    title='Timeseries',
+    description='',
+    query='',
     legendFormat='',
     format='short',
-    interval="1m",
+    interval='1m',
     intervalFactor=3,
     yAxisLabel='Queue Length',
     linewidth=2,
-    ):: graphPanel.new(
+  ):: graphPanel.new(
     title,
     description=description,
-    sort="decreasing",
+    sort='decreasing',
     linewidth=linewidth,
     fill=0,
-    datasource="$PROMETHEUS_DS",
+    datasource='$PROMETHEUS_DS',
     decimals=0,
     legend_show=true,
     legend_values=true,
@@ -131,14 +131,14 @@ local singlestatPanel = grafana.singlestat;
     legend_alignAsTable=true,
     legend_hideEmpty=true,
   )
-  .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
-  .resetYaxes()
-  .addYaxis(
+      .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
+      .resetYaxes()
+      .addYaxis(
     format=format,
     min=0,
     label=yAxisLabel,
   )
-  .addYaxis(
+      .addYaxis(
     format='short',
     max=1,
     min=0,
@@ -146,22 +146,22 @@ local singlestatPanel = grafana.singlestat;
   ),
 
   saturationTimeseries(
-    title="Saturation",
-    description="",
-    query="",
+    title='Saturation',
+    description='',
+    query='',
     legendFormat='',
     yAxisLabel='Saturation',
-    interval="1m",
+    interval='1m',
     intervalFactor=3,
     linewidth=2,
     legend_show=true,
-    ):: graphPanel.new(
+  ):: graphPanel.new(
     title,
     description=description,
-    sort="decreasing",
+    sort='decreasing',
     linewidth=linewidth,
     fill=0,
-    datasource="$PROMETHEUS_DS",
+    datasource='$PROMETHEUS_DS',
     decimals=0,
     legend_show=legend_show,
     legend_values=true,
@@ -173,15 +173,15 @@ local singlestatPanel = grafana.singlestat;
     legend_alignAsTable=true,
     legend_hideEmpty=true,
   )
-  .addTarget(promQuery.target('clamp_min(clamp_max(' + query + ',1),0)', legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
-  .resetYaxes()
-  .addYaxis(
-    format="percentunit",
+      .addTarget(promQuery.target('clamp_min(clamp_max(' + query + ',1),0)', legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
+      .resetYaxes()
+      .addYaxis(
+    format='percentunit',
     min=0,
     max=1,
     label=yAxisLabel,
   )
-  .addYaxis(
+      .addYaxis(
     format='short',
     max=1,
     min=0,
@@ -189,26 +189,26 @@ local singlestatPanel = grafana.singlestat;
   ),
 
   latencyTimeseries(
-    title="Latency",
-    description="",
-    query="",
+    title='Latency',
+    description='',
+    query='',
     legendFormat='',
-    format="s",
+    format='s',
     yAxisLabel='Duration',
-    interval="1m",
+    interval='1m',
     intervalFactor=3,
     legend_show=true,
     logBase=1,
     decimals=2,
     linewidth=2,
     min=0,
-    ):: graphPanel.new(
+  ):: graphPanel.new(
     title,
     description=description,
-    sort="decreasing",
+    sort='decreasing',
     linewidth=linewidth,
     fill=0,
-    datasource="$PROMETHEUS_DS",
+    datasource='$PROMETHEUS_DS',
     decimals=decimals,
     legend_show=legend_show,
     legend_values=true,
@@ -220,15 +220,15 @@ local singlestatPanel = grafana.singlestat;
     legend_alignAsTable=true,
     legend_hideEmpty=true,
   )
-  .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
-  .resetYaxes()
-  .addYaxis(
-    format="s",
+      .addTarget(promQuery.target(query, legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
+      .resetYaxes()
+      .addYaxis(
+    format='s',
     min=min,
     label=yAxisLabel,
     logBase=logBase,
   )
-  .addYaxis(
+      .addYaxis(
     format='short',
     max=1,
     min=0,
@@ -236,20 +236,20 @@ local singlestatPanel = grafana.singlestat;
   ),
 
   slaTimeseries(
-    title="SLA",
-    description="",
-    query="",
+    title='SLA',
+    description='',
+    query='',
     legendFormat='',
     yAxisLabel='SLA',
-    interval="1m",
+    interval='1m',
     intervalFactor=3,
-    ):: graphPanel.new(
+  ):: graphPanel.new(
     title,
     description=description,
-    sort="decreasing",
+    sort='decreasing',
     linewidth=2,
     fill=0,
-    datasource="$PROMETHEUS_DS",
+    datasource='$PROMETHEUS_DS',
     decimals=2,
     legend_show=true,
     legend_values=true,
@@ -261,14 +261,14 @@ local singlestatPanel = grafana.singlestat;
     legend_alignAsTable=true,
     legend_hideEmpty=true,
   )
-  .addTarget(promQuery.target('clamp_min(clamp_max(' + query + ',1),0)', legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
-  .resetYaxes()
-  .addYaxis(
-    format="percentunit",
+      .addTarget(promQuery.target('clamp_min(clamp_max(' + query + ',1),0)', legendFormat=legendFormat, interval=interval, intervalFactor=intervalFactor))
+      .resetYaxes()
+      .addYaxis(
+    format='percentunit',
     max=1,
     label=yAxisLabel,
   )
-  .addYaxis(
+      .addYaxis(
     format='short',
     max=1,
     min=0,
@@ -276,48 +276,50 @@ local singlestatPanel = grafana.singlestat;
   ),
 
   networkTrafficGraph(
-    title="Node Network Utilization",
-    description="Network utilization",
+    title='Node Network Utilization',
+    description='Network utilization',
     sendQuery,
     legendFormat='{{ fqdn }}',
     receiveQuery,
     intervalFactor=3,
     legend_show=true
   ):: graphPanel.new(
-        title,
-        linewidth=1,
-        fill=0,
-        description=description,
-        datasource="$PROMETHEUS_DS",
-        decimals=2,
-        sort="decreasing",
-        legend_show=legend_show,
-        legend_values=false,
-        legend_alignAsTable=false,
-        legend_hideEmpty=true,
-      )
+    title,
+    linewidth=1,
+    fill=0,
+    description=description,
+    datasource='$PROMETHEUS_DS',
+    decimals=2,
+    sort='decreasing',
+    legend_show=legend_show,
+    legend_values=false,
+    legend_alignAsTable=false,
+    legend_hideEmpty=true,
+  )
       .addSeriesOverride(seriesOverrides.networkReceive)
       .addTarget(
-        promQuery.target(sendQuery,
-          legendFormat='send ' + legendFormat,
-          intervalFactor=intervalFactor,
-        )
-      )
+    promQuery.target(
+      sendQuery,
+      legendFormat='send ' + legendFormat,
+      intervalFactor=intervalFactor,
+    )
+  )
       .addTarget(
-        promQuery.target(receiveQuery,
-          legendFormat='receive ' + legendFormat,
-          intervalFactor=intervalFactor,
-        )
-      )
+    promQuery.target(
+      receiveQuery,
+      legendFormat='receive ' + legendFormat,
+      intervalFactor=intervalFactor,
+    )
+  )
       .resetYaxes()
       .addYaxis(
-        format='Bps',
-        label="Network utilization",
-      )
+    format='Bps',
+    label='Network utilization',
+  )
       .addYaxis(
-        format='short',
-        max=1,
-        min=0,
-        show=false,
-      )
+    format='short',
+    max=1,
+    min=0,
+    show=false,
+  ),
 }
