@@ -71,7 +71,7 @@ Centralized logging at GitLab uses a combination of StackDriver, FluentD, google
 and ElasticSearch / Kibana. All logs for the production, staging, gprd and
 gstg environments are forwarded to log.gitlab.net.
 
-![Logical scheme](../img/logging-infr.png)
+![Logical scheme](./img/logging-infr.png)
 
 ### Stackdriver exporter
 

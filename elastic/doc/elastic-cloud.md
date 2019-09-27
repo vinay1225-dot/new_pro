@@ -2,7 +2,7 @@
 
 **Elastic Vendor Tracker**: https://gitlab.com/gitlab-com/gl-infra/elastic/issues
 
-Instead of hosting our own elastic search cluster we are using a cluster managed by elastic.co. Our logs are forwarded to it via pubsub beat (see [howto/logging.md](howto/logging.md)).
+Instead of hosting our own elastic search cluster we are using a cluster managed by elastic.co. Our logs are forwarded to it via pubsub beat (see [logging/doc/logging.md](../../logging/doc/logging.md)).
 
 Current capacity:
 * 3 zones
