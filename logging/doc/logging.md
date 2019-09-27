@@ -13,8 +13,8 @@
         - [StackDriver](#stackdriver)
         - [BigQuery](#bigquery)
     - [Overview](#overview)
-        - [Stackdriver exporter](#stackdriver-exporter)
         - [What are we logging?](#what-are-we-logging)
+        - [Overview](#overview-1)
         - [FAQ](#faq)
             - [Why are we using StackDriver in addition to ElasticSearch?](#why-are-we-using-stackdriver-in-addition-to-elasticsearch)
             - [Why are we using pubsub queues instead of sending logs from fluentd directly to Elastic?](#why-are-we-using-pubsub-queues-instead-of-sending-logs-from-fluentd-directly-to-elastic)
@@ -106,16 +106,6 @@ a StackDriver sink: [gitlab-production:haproxy_logs](https://console.cloud.googl
 
 ## Overview
 
-Centralized logging at GitLab uses a combination of StackDriver, FluentD, google pubsub,
-and ElasticSearch / Kibana. All logs for the production, staging, gprd and
-gstg environments are forwarded to log.gitlab.net.
-
-![Logical scheme](./img/logging-infr.png)
-
-### Stackdriver exporter
-
-There is a VM in each environment called `sd-exporter-*`. This VM is created using a generic terraform module https://ops.gitlab.net/gitlab-com/gl-infra/terraform-modules/google/generic-sv-with-group . The VM has a chef role assigned to it which downloads and runs the stackdriver exporter https://gitlab.com/gitlab-cookbooks/gitlab-exporters/ . The exporter service runs on a tcp port number 9255. Prometheus is configured through a role in chef-repo to scrape port 9255 on "sd-exporter-*" VM.
-
 ### What are we logging?
 
 **production.log and haproxy logs are no longer being sent to elasticcloud due because it was overwhelming our cluster, currently these logs are only available in StackDriver**
@@ -159,6 +149,69 @@ For retention in elasticcloud, see the cleanup script - https://gitlab.com/gitla
 | history.psql | /home/*-db/.psql_history  | | |
 | history.irb | /var/log/irb_history/*.log  | | |
 
+### Logging infrastructure
+
+![Overview](./img/logging.png)
+
+Files containing logs are parsed by Fluentd (td-agent). Fluentd runs directly on a number of different VMs across our fleet or as a [daemonset](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) inside kubernetes. Fluentd running on VMs is configured to send logs to two destinations: [Stackdriver](https://cloud.google.com/stackdriver/docs/) and [Cloud Pub/Sub](https://cloud.google.com/pubsub/docs/). Fluentd running as a daemonset, sends logs only to Stackdriver.
+
+All logs reaching Stackdriver are saved to GCS using an export sink where they are stored long-term (e.g. 6 months) for compliance reasons and can be read using BigQuery. Kubernetes logs are also forwarded from Stackdriver to Pub/Sub (that's because Fluentd in kubernetes is not forwarding logs to Pub/Sub).
+
+Logs from different components have designated topics in Pub/Sub and each topic has a corresponding subscription. There is a subscriber for each subscription. At the moment of writing we are using pubsubbeat to subscribe to Pub/Sub subscriptions and forward logs to an Elastic cluster.
+
+Pubsubbeat runs on dedicated VMs. The binary pulls logs from a subscription and uploads them to Elastic using the [bulk API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html). The default configuration of Pubsubbeat is to create templates and field mappings in indices. However, we are instead relying on the dynamic mappings created by the Elastic cluster. Some alternatives to Pubsubbeat include: Filebeat, Fluentd, Logstash.
+
+Aliases are referenced by Pubsubbeat when uploading logs to Elastic. When logs reach the Elastic cluster, they are indexed into documents by a worker, the alias name is resolved to an index name and the documents are saved in the index. There should only ever be one active index per alias and the alias should be pointing to that index.
+
+Indices can be managed in different ways (e.g. custom scripts, Curator, ILM). [The ILM plugin](https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started-index-lifecycle-management.html) has proved to be particularly useful and has become very popular in recent year, so it was integrated into Elastic. It meets a lot of our requirements so that's what we're using. ILM behavior is configured via policies assigned to indices and ILM config. The plugin triggers an ILM step of an index at a configurable frequency. The indices go through a number of steps, which can be simplified to: warm -> hot -> cold -> delete. Behavior of ILM at each of those steps is defined in the ILM policy. Here's an example policy:
+```
+{
+    "policy": {
+        "phases": {
+            "hot": {
+                "actions": {
+                    "rollover": {
+                        "max_age": "3d",
+                        "max_size": "50gb"
+                    },
+                    "set_priority": {
+                        "priority": 100
+                    }
+                }
+            },
+            "warm": {
+                "min_age": "1m",
+                "actions": {
+                    "forcemerge": {
+                        "max_num_segments": 1
+                    },
+                    "allocate": {
+                        "require": {
+                            "data": "warm"
+                        }
+					          },
+					          "set_priority": {
+						            "priority": 50
+                    }
+                }
+            },
+            "delete": {
+                "min_age": "7d",
+                "actions": {
+                    "delete": {}
+                }
+            }
+        }
+    }
+}
+```
+Let's say ILM is configured to run every 10 mins and the above policy is assigned to a newly created index. What will happen, is after 10 mins, ILM will trigger the hot phase, which will check the size and age of the index. If the size exceeds 50GB or the age exceeds 3 days, the configured [action](https://www.elastic.co/guide/en/elasticsearch/reference/current/_actions.html) is triggered, which in this case would send a call to the [rollover api](https://www.elastic.co/guide/en/elasticsearch/reference/master/indices-rollover-index.html). The rollover API will mark the current index as non-writable, mark it for the warm phase and create a new index from an index template. This way, we can control for example the size of shards within indices or logs retention period.
+
+Logs (documents) can be viewed in Kibana using index patterns, i.e. when you open the Discover application in Kibana, you can select the index pattern from a drop-down list and all searches you will submit will be performed against all indices matching the index pattern. There are also a number of other features in Kibana we're using: dashboards, saved searches, visualizations, watchers.
+
+Our Elastic clusters have monitoring enabled and the monitoring metrics are forwarding to a separate monitoring cluster.
+
+There is a VM in each environment called `sd-exporter-*`. This VM is created using a generic terraform module https://ops.gitlab.net/gitlab-com/gl-infra/terraform-modules/google/generic-sv-with-group . The VM has a chef role assigned to it which downloads and runs the stackdriver exporter https://gitlab.com/gitlab-cookbooks/gitlab-exporters/ . The exporter service runs on a tcp port number 9255. Prometheus is configured through a role in chef-repo to scrape port 9255 on `sd-exporter-*` VMs. Metrics scraped this way are the basis for pubsub alerts.
 
 ### FAQ
 
